@@ -89,9 +89,10 @@ router.post('/forgot_password', async (req, res) => {
         mailer.sendMail({
             to: email,
             from: 'luizvasconcellosjunior@gmail.com',
-            template: '../resources/mail/auth/forgot_password',
+            // template: '../resources/mail/auth/forgot_password',
             subject: 'Redefinição de senha',
-            context: { token },
+            // context: { token },
+            html: `<h1>E-mail para redefinição de senha</h1> <p>Para recuperar sua senha, utilize este token: ${ token }</p>`
         }, (err) => {
             if(err){
                 return res.status(400).send({ error: 'Cannot send forgot password email' });
