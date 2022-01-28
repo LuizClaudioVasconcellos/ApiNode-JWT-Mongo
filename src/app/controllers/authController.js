@@ -7,6 +7,7 @@ const mailer = require('../../modules/mailer');
 const authConfig = require('../../config/auth.json')
 
 const User = require('../models/user');
+const req = require('express/lib/request');
 
 const router = express.Router();
 
@@ -92,9 +93,9 @@ router.post('/forgot_password', async (req, res) => {
             // template: '../resources/mail/auth/forgot_password',
             subject: 'Redefinição de senha',
             // context: { token },
-            html: `<h1>E-mail para redefinição de senha</h1> <p>Para recuperar sua senha, utilize este token: ${ token }</p>`
+            html: `<h1>E-mail para redefinição de senha</h1> <p>Para recuperar sua senha, utilize este token: ${token}</p>`
         }, (err) => {
-            if(err){
+            if (err) {
                 return res.status(400).send({ error: 'Cannot send forgot password email' });
             };
 
@@ -103,6 +104,37 @@ router.post('/forgot_password', async (req, res) => {
 
     } catch (err) {
         res.status(400).send({ error: 'Error on forgot password, try again' });
+    }
+});
+
+router.post('/reset_password', async (req, res) => {
+    const { email, token, password } = req.body;
+
+    try {
+        const user = await User.findOne({ email }).select('+passwordResetToken PasswordRestExpires');
+
+        if (!user) {
+            return res.status(400).send({ error: 'User not found' });
+        };
+
+        if (token !== user.passwordResetToken) {
+            return res.status(400).send({ error: 'Token invalid' });
+        };
+
+        const now = Date();
+
+        if (now > user.passwordResteExpires){
+            return res.status(400).send({ error: 'Token expired, generate a new one' });
+        };
+
+        user.password = password;
+
+        await user.save();
+
+        return res.send();
+
+    } catch (error) {
+        res.status(400).send({ error: 'Cannot reset password, try again' });
     }
 });
 
