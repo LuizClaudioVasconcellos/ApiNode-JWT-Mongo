@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const mailer = require('../../modules/mailer');
 
 const authConfig = require('../../config/auth.json')
 
@@ -85,10 +86,22 @@ router.post('/forgot_password', async (req, res) => {
             }
         });
 
-        console.log(token, now);
+        mailer.sendMail({
+            to: email,
+            from: 'luizvasconcellosjunior@gmail.com',
+            template: '../resources/mail/auth/forgot_password',
+            subject: 'Redefinição de senha',
+            context: { token },
+        }, (err) => {
+            if(err){
+                return res.status(400).send({ error: 'Cannot send forgot password email' });
+            };
+
+            return res.send();
+        });
 
     } catch (err) {
-        res.status(400).send({ error: 'Erro on forgot password, try again' });
+        res.status(400).send({ error: 'Error on forgot password, try again' });
     }
 });
 
